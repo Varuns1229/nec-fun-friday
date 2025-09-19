@@ -1,0 +1,149 @@
+<script type="text/javascript">
+        var gk_isXlsx = false;
+        var gk_xlsxFileLookup = {};
+        var gk_fileData = {};
+        function filledCell(cell) {
+          return cell !== '' && cell != null;
+        }
+        function loadFileData(filename) {
+        if (gk_isXlsx && gk_xlsxFileLookup[filename]) {
+            try {
+                var workbook = XLSX.read(gk_fileData[filename], { type: 'base64' });
+                var firstSheetName = workbook.SheetNames[0];
+                var worksheet = workbook.Sheets[firstSheetName];
+
+                // Convert sheet to JSON to filter blank rows
+                var jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1, blankrows: false, defval: '' });
+                // Filter out blank rows (rows where all cells are empty, null, or undefined)
+                var filteredData = jsonData.filter(row => row.some(filledCell));
+
+                // Heuristic to find the header row by ignoring rows with fewer filled cells than the next row
+                var headerRowIndex = filteredData.findIndex((row, index) =>
+                  row.filter(filledCell).length >= filteredData[index + 1]?.filter(filledCell).length
+                );
+                // Fallback
+                if (headerRowIndex === -1 || headerRowIndex > 25) {
+                  headerRowIndex = 0;
+                }
+
+                // Convert filtered JSON back to CSV
+                var csv = XLSX.utils.aoa_to_sheet(filteredData.slice(headerRowIndex)); // Create a new sheet from filtered array of arrays
+                csv = XLSX.utils.sheet_to_csv(csv, { header: 1 });
+                return csv;
+            } catch (e) {
+                console.error(e);
+                return "";
+            }
+        }
+        return gk_fileData[filename] || "";
+        }
+        </script><!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Guess That Wacky Movie!</title>
+    <style>
+        body {
+            font-family: 'Comic Sans MS', cursive;
+            background-color: #ffeb3b;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            text-align: center;
+        }
+        .card {
+            background-color: #fff9c4;
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+            width: 800px;
+        }
+        .card img {
+            max-width: 100%;
+            width: 700px;
+            height: 400px;
+            border: 5px solid #ff5722;
+            border-radius: 10px;
+        }
+        button {
+            background-color: #ff5722;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            margin: 10px;
+            cursor: pointer;
+            font-family: 'Comic Sans MS', cursive;
+        }
+        button:hover {
+            background-color: #e64a19;
+        }
+        .nav-buttons {
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <h1>Guess That Wacky Movie!</h1>
+        <img id="movieImage" src="" alt="Movie Scene">
+        <button id="showName">Reveal the Madness!</button>
+        <p id="movieName" style="display:none; color: #d81b60;">Movie: </p>
+        <div class="nav-buttons">
+            <button id="prev">Previous LOL</button>
+            <button id="next">Next Hilarity</button>
+        </div>
+    </div>
+
+    <script>
+        const movies = [
+            { image: 'images/3.webp', name: 'golmaal', index: 3 },
+            { image: 'images/2.jpg', name: '3 idiots', index: 2 },
+            { image: 'images/4.jpeg', name: 'Ishq', index: 4 },
+            { image: 'images/1.webp', name: 'Bhool Bhulaiyaa', index: 1 },
+            { image: 'images/5.jpg', name: 'Bol Bachchan', index: 5 },
+            { image: 'images/6.jpeg', name: 'Chup Chup ke', index: 6 },
+            { image: 'images/7.jpg', name: 'Phir Hera Pheri', index: 7 },
+            { image: 'images/8.jpeg', name: 'Dhol', index: 8 },
+            { image: 'images/9.jpg', name: 'Dhamaal', index: 9 },
+            { image: 'images/10.jpeg', name: 'Khatta Meetha', index: 10 },
+            { image: 'images/11.jpg', name: 'PK', index: 11 },
+            { image: 'images/13.gif', name: 'Munna Bhai M.B.B.S', index: 12 },
+            { image: 'images/12.jpg', name: 'Mujhse shaadi karogi', index: 13 },
+        ];
+
+        let currentIndex = 0;
+
+        const movieImage = document.getElementById('movieImage');
+        const movieName = document.getElementById('movieName');
+        const showNameBtn = document.getElementById('showName');
+        const prevBtn = document.getElementById('prev');
+        const nextBtn = document.getElementById('next');
+
+        function loadMovie() {
+            movieImage.src = movies[currentIndex].image;
+            movieName.textContent = `Movie: ${movies[currentIndex].name}`;
+            movieName.style.display = 'none';
+        }
+
+        showNameBtn.addEventListener('click', () => {
+            movieName.style.display = 'block';
+        });
+
+        prevBtn.addEventListener('click', () => {
+            currentIndex = (currentIndex - 1 + movies.length) % movies.length;
+            loadMovie();
+        });
+
+        nextBtn.addEventListener('click', () => {
+            currentIndex = (currentIndex + 1) % movies.length;
+            loadMovie();
+        });
+
+        loadMovie();
+    </script>
+</body>
+</html>
